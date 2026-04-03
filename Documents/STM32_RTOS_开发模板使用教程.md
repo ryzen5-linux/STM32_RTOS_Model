@@ -55,6 +55,7 @@
     - Makefile：自动加载清单、跨平台构建规则
     - project.mk：用户可编辑的构建参数（目标名、链接脚本、编译选项）
     - STM32F103C8Tx_FLASH.ld：链接脚本，定义 Flash/RAM 分区
+    - scripts/build_win.cmd：Windows CMD 构建入口脚本
     - scripts/build_win.ps1：Windows 构建入口脚本
     - scripts/build_linux.sh：Linux 构建入口脚本
     - build/：构建产物输出目录（elf / hex / bin / map / build.log）
@@ -99,7 +100,11 @@
 
 ### 4.1 构建入口
 
-Windows：
+Windows CMD：
+
+  .\Gcc\scripts\build_win.cmd all
+
+Windows PowerShell：
 
     powershell -ExecutionPolicy Bypass -File .\Gcc\scripts\build_win.ps1 all
 
@@ -113,6 +118,24 @@ Linux：
 - clean：清理构建产物
 - rebuild：先 clean 再 all
 - print-vars：打印构建变量和自动扫描结果
+
+CMD 脚本和 PowerShell 脚本支持相同的动作参数，均可在动作后继续追加 make 参数。例如：
+
+  .\Gcc\scripts\build_win.cmd rebuild V=1
+
+CMD 脚本适合以下场景：
+
+- 不希望处理 PowerShell 执行策略时
+- 习惯直接在开发者命令提示符或普通命令提示符中构建时
+- 需要快速执行 clean / rebuild / print-vars 等固定动作时
+
+CMD 脚本执行流程如下：
+
+1. 自动向上查找工程根目录（定位 Gcc/Makefile）
+2. 自动检测系统中的 make 工具（按 mingw32-make.exe、make.exe、gmake.exe 顺序）
+3. 自动定位工程父目录下的 GNU Arm Embedded Toolchain
+4. 自动生成 Gcc/build/auto_sources.mk
+5. 调用 make 执行目标动作，并将完整日志输出到 Gcc/build/build.log
 
 ### 4.2 自动文件发现机制
 
@@ -178,6 +201,8 @@ Linux 构建脚本直接调用 `arm-none-eabi-gcc`，要求工具链已加入系
     # 然后在 MSYS2 终端执行：
     pacman -S mingw-w64-x86_64-make
 
+  如果你使用的是 CMD 脚本，只要上述任一 make 可执行文件已在 PATH 中即可，无需额外修改脚本。
+
 #### 关键编译选项说明
 
 | 选项 | 说明 |
@@ -217,6 +242,9 @@ Linux 构建脚本直接调用 `arm-none-eabi-gcc`，要求工具链已加入系
 ### 第一步：确认模板能在本机稳定构建
 
 1. 执行 all 构建
+  - Windows CMD：`.\Gcc\scripts\build_win.cmd all`
+  - Windows PowerShell：`.\Gcc\scripts\build_win.ps1 all`
+  - Linux：`./Gcc/scripts/build_linux.sh all`
 2. 确认生成以下产物
    - Gcc/build/STM32_RTOS.elf
    - Gcc/build/STM32_RTOS.hex

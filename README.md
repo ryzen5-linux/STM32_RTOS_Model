@@ -5,7 +5,7 @@
 ## 核心特性
 
 - **稳定内核**：基于 FreeRTOS，已配置好任务、队列、互斥量、信号量与软件定时器的基础演示。
-- **开箱即用构建**：使用 GCC (arm-none-eabi-gcc) + Makefile，跨平台支持 Windows (PowerShell) 与 Linux (Bash)。自带源文件自动发现机制，无需手动修改大段 Makefile。
+- **开箱即用构建**：使用 GCC (arm-none-eabi-gcc) + Makefile，跨平台支持 Windows (CMD/PowerShell) 与 Linux (Bash)。自带源文件自动发现机制，无需手动修改大段 Makefile。
 - **完备的启动自检**：上电即对 RCC、GPIO、USART、TIM、ADC、DMA、EXTI 和 RTC 等关键外设进行自动化连通性验证。
 - **系统监控日志**：内置 Task3 心跳任务，默认一秒输出一次 RTOS 状态 (Tick、任务数、队列深度、空闲堆、历史最小空闲堆)。
 - **规范的目录拆分**：BSP、驱动 (Peripheral/Device/Support/Resources)、应用代码 (App)、内核与外设库，天然支持业务分层。
@@ -26,6 +26,12 @@
 
 ### 1. 编译构建
 
+**Windows (CMD):**
+```cmd
+:: 执行完整构建 (包含 elf, hex, bin 转换及输出 size)
+.\Gcc\scripts\build_win.cmd all
+```
+
 **Windows (PowerShell):**
 ```powershell
 # 执行完整构建 (包含 elf, hex, bin 转换及输出 size)
@@ -42,11 +48,33 @@ chmod +x ./Gcc/scripts/build_linux.sh
 产物路径：`Gcc/build/STM32_RTOS.hex` (或 `.bin`)
 编译日志：`Gcc/build/build.log`
 
+Windows CMD 脚本同样支持常用构建动作：
+
+```cmd
+:: 清理构建产物
+.\Gcc\scripts\build_win.cmd clean
+
+:: 先清理再完整构建
+.\Gcc\scripts\build_win.cmd rebuild
+
+:: 打印自动扫描出的源文件、头文件目录和关键变量
+.\Gcc\scripts\build_win.cmd print-vars
+```
+
+也可以在动作后追加 make 参数，例如：
+
+```cmd
+.\Gcc\scripts\build_win.cmd all V=1
+```
+
 ### 2. 清理工程
 
 **Windows:**
 ```powershell
 .\Gcc\scripts\build_win.ps1 clean
+```
+```cmd
+.\Gcc\scripts\build_win.cmd clean
 ```
 **Linux:**
 ```bash
