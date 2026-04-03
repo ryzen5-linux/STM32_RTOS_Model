@@ -1,0 +1,8 @@
+Gcc/build/
+Gcc/Download.log
+.vscode/
+
+*.o
+*.d
+*.su
+*.tmp
