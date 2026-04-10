@@ -1,4 +1,4 @@
-/* GCC-compatible startup for STM32F10x medium-density devices */
+/* GCC-compatible startup for STM32F10x high-density devices */
     .syntax unified
     .cpu cortex-m3
     .fpu softvfp
@@ -67,6 +67,22 @@ g_pfnVectors:
     .word   EXTI15_10_IRQHandler
     .word   RTCAlarm_IRQHandler
     .word   USBWakeUp_IRQHandler
+    .word   TIM8_BRK_IRQHandler
+    .word   TIM8_UP_IRQHandler
+    .word   TIM8_TRG_COM_IRQHandler
+    .word   TIM8_CC_IRQHandler
+    .word   ADC3_IRQHandler
+    .word   FSMC_IRQHandler
+    .word   SDIO_IRQHandler
+    .word   TIM5_IRQHandler
+    .word   SPI3_IRQHandler
+    .word   UART4_IRQHandler
+    .word   UART5_IRQHandler
+    .word   TIM6_IRQHandler
+    .word   TIM7_IRQHandler
+    .word   DMA2_Channel1_IRQHandler
+    .word   DMA2_Channel2_IRQHandler
+    .word   DMA2_Channel3_IRQHandler
+    .word   DMA2_Channel4_5_IRQHandler
 
     .include "../BSP/CMSIS/startup_stm32f10x_common.inc"
-

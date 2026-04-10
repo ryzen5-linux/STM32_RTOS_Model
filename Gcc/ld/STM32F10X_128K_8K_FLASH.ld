@@ -1,0 +1,8 @@
+RAM_ORIGIN = 0x20000000;
+RAM_LENGTH = 8K;
+FLASH_ORIGIN = 0x08000000;
+FLASH_LENGTH = 128K;
+_estack = RAM_ORIGIN + RAM_LENGTH;
+_Min_Heap_Size = 0x200;
+_Min_Stack_Size = 0x400;
+INCLUDE "ld/stm32f10x_flash_common.ld"

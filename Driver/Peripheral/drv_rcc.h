@@ -1,7 +1,7 @@
 /**
   ******************************************************************************
   * @file    drv_rcc.h
-  * @brief   复位与时钟控制(RCC)驱动头文件 - STM32F103C8T6
+  * @brief   复位与时钟控制(RCC)驱动头文件
   *
   * 功能概述:
   *   - 系统时钟配置（72MHz HSE+PLL标准配置）
@@ -26,6 +26,7 @@
 #define __DRV_RCC_H
 
 #include "stm32f10x.h"
+#include "stm32f10x_gpio.h"
 #include "stm32f10x_rcc.h"
 #include "stm32f10x_flash.h"
 
@@ -48,8 +49,11 @@ typedef struct
  *===========================================================================*/
 
 /**
- * @brief  配置系统时钟为72MHz（HSE 8MHz + PLL x9）
- *         AHB=72MHz, APB1=36MHz, APB2=72MHz, Flash 2等待周期
+ * @brief  配置系统时钟到当前芯片组支持的标准高速档
+ *         F101/F102/F103: HSE 8MHz + PLL x9 -> 72MHz
+ *         F100 Value Line: HSE 8MHz / 2 * 6 -> 24MHz
+ *         F105/F107: HSE 25MHz + PLL2/PREDIV1 + PLL
+ *         结果时钟会随芯片组不同而变化，因此保留旧函数名仅为兼容现有接口
  *         本函数应在startup之后最早期调用（通常由SystemInit调用）
  * @note   若不使用本函数，可直接依赖system_stm32f10x.c中的SystemInit
  */

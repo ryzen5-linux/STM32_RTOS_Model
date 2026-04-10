@@ -10,12 +10,18 @@ REQUESTED_GOALS := $(if $(MAKECMDGOALS),$(MAKECMDGOALS),all)
 -include $(PROJECT_MK)
 -include $(AUTO_MK)
 
+LINKER_SCRIPT_PATH := $(abspath $(MAKEFILE_DIR)/$(LINKER_SCRIPT))
+NON_STARTUP_ASM := $(filter-out BSP/CMSIS/startup_stm32f10x_%,$(AUTO_SRC_ASM))
+
 ifneq ($(filter-out clean help print-vars,$(REQUESTED_GOALS)),)
 ifeq ($(strip $(AUTO_SRC_C)$(AUTO_SRC_ASM)$(AUTO_INC_DIRS)),)
 $(error Auto source manifest missing. Run Gcc/scripts/build_win.ps1 or Gcc/scripts/build_linux.sh first.)
 endif
 ifeq ($(strip $(TARGET)),)
 $(error TARGET is not set. Check $(PROJECT_MK).)
+endif
+ifeq ($(strip $(STARTUP_FILE)),)
+$(error STARTUP_FILE is not set. Check $(PROJECT_MK).)
 endif
 endif
 
@@ -45,7 +51,7 @@ endif
 INCLUDES := $(addprefix -I$(PROJECT_ROOT)/,$(AUTO_INC_DIRS))
 
 SRC_C := $(AUTO_SRC_C)
-SRC_ASM := $(AUTO_SRC_ASM)
+SRC_ASM := $(NON_STARTUP_ASM) $(STARTUP_FILE)
 SRC_FILES := $(addprefix ../,$(SRC_C)) $(addprefix ../,$(SRC_ASM))
 
 SRC_C_COUNT := $(words $(SRC_C))
@@ -97,7 +103,15 @@ print-vars:
 	@echo OBJCOPY=$(OBJCOPY)
 	@echo SIZE=$(SIZE)
 	@echo TARGET=$(TARGET)
+	@echo MCU=$(MCU)
+	@echo MCU_FAMILY=$(MCU_FAMILY)
+	@echo FLASH_KB=$(FLASH_KB)
+	@echo RAM_KB=$(RAM_KB)
+	@echo STARTUP_GROUP=$(STARTUP_GROUP)
+	@echo STARTUP_FILE=$(STARTUP_FILE)
+	@echo HSE_VALUE_HZ=$(HSE_VALUE_HZ)
 	@echo LINKER_SCRIPT=$(LINKER_SCRIPT)
+	@echo LINKER_SCRIPT_PATH=$(LINKER_SCRIPT_PATH)
 	@echo CFLAGS=$(CFLAGS)
 	@echo LDFLAGS=$(LDFLAGS)
 	@echo LIBS=$(LIBS)

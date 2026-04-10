@@ -2,14 +2,15 @@
 
 ## 1. 项目简介
 
-本项目是一个面向 STM32F103C8T6 的 FreeRTOS 开发模板，目标是让你可以在一个已经可运行、可自检、可扩展的工程基础上快速开展业务开发。
+本项目是一个默认面向 STM32F103C8T6、同时兼容多种 STM32F10x 芯片组的 FreeRTOS 开发模板，目标是让你可以在一个已经可运行、可自检、可扩展的工程基础上快速开展业务开发。
 
 模板当前具备以下特性：
 
-- MCU 平台：STM32F103C8T6（Cortex-M3，72MHz，64KB Flash，20KB RAM）
+- MCU 平台：默认 STM32F103C8T6，同时支持常见 STM32F100 / F103 / F105 / F107 型号
 - 系统内核：FreeRTOS（启用任务、队列、互斥量、信号量、软件定时器）
 - 工程组织：按 BSP、驱动、应用、RTOS 内核分层
 - 构建系统：GCC + Makefile + Windows/Linux 构建脚本
+- 芯片切换：通过 Gcc/project.mk 中的 MCU 变量快速切换目标型号
 - 日志能力：统一输出到 Gcc/build/build.log，包含文件清单和编译过程信息
 - 启动自检：上电后可执行多外设自检并输出结果
 
@@ -18,6 +19,10 @@
 - 作为新项目起点，快速接入实际业务逻辑
 - 作为学习模板，理解 STM32 + FreeRTOS 的标准工程组织方式
 - 作为团队模板，复用目录规范和构建流程
+
+如需查看已内置芯片型号、芯片组宏、启动文件和链接脚本支持情况，请同时参考：
+
+- Documents/STM32F10x_支持芯片型号.md
 
 ---
 
@@ -28,6 +33,7 @@
 - BSP/
   - 芯片底层支持与系统启动
   - 包括启动文件、系统时钟、中断处理、延时与系统初始化
+  - 启动文件按 STM32F10x 芯片组拆分，不同芯片组使用不同的中断向量表
 - Driver/
   - 驱动层总目录，进一步细分为以下四个子目录：
   - Driver/Peripheral/
@@ -53,8 +59,10 @@
 - Gcc/
   - 构建系统目录，包含以下关键内容：
     - Makefile：自动加载清单、跨平台构建规则
-    - project.mk：用户可编辑的构建参数（目标名、链接脚本、编译选项）
-    - STM32F103C8Tx_FLASH.ld：链接脚本，定义 Flash/RAM 分区
+    - project.mk：用户可编辑的构建参数，主要通过 MCU 切换芯片型号
+    - mcu_profiles.mk：内置芯片型号到芯片组/内存容量/启动文件的映射表
+    - ld/：通用链接脚本目录，按 Flash/RAM 容量组织
+    - STM32F103C8Tx_FLASH.ld：旧版兼容入口，内部转发到新的通用链接脚本
     - scripts/build_win.cmd：Windows CMD 构建入口脚本
     - scripts/build_win.ps1：Windows 构建入口脚本
     - scripts/build_linux.sh：Linux 构建入口脚本
@@ -151,6 +159,8 @@ Makefile 从该清单中读取：
 
 这样可以减少手工维护文件列表的工作量。
 
+其中 `BSP/CMSIS/startup_stm32f10x_*.s` 不会被全部加入自动清单。构建系统会先排除所有启动文件，再根据 `project.mk` 解析出的 `STARTUP_FILE` 只追加当前目标芯片对应的那一个启动文件，以避免多个向量表同时参与链接。
+
 ### 4.3 编译工具链说明
 
 本模板使用 GNU Arm Embedded Toolchain（arm-none-eabi-gcc）编译器。
@@ -208,8 +218,9 @@ Linux 构建脚本直接调用 `arm-none-eabi-gcc`，要求工具链已加入系
 | 选项 | 说明 |
 |---|---|
 | `-mcpu=cortex-m3 -mthumb` | 指定 Cortex-M3 架构，Thumb 指令集 |
-| `-DSTM32F10X_MD` | 中密度型号宏，影响片上外设寄存器映射 |
+| `-DSTM32F10X_xx` | 由 MCU 自动派生的芯片组宏，影响寄存器映射与中断定义 |
 | `-DUSE_STDPERIPH_DRIVER` | 启用 ST 标准外设库 |
+| `-DHSE_VALUE=...U` | 由 MCU 自动派生的外部晶振频率，CL 系列默认 25MHz，其余常见 F10x 默认 8MHz |
 | `-ffunction-sections -fdata-sections -Wl,--gc-sections` | 链接时裁剪未使用代码，减小固件体积 |
 | `-Og -g3` | 调试优化级别，保留调试信息 |
 | `--specs=nano.specs --specs=nosys.specs` | 使用 nano libc，禁用半主机（semihosting）模式 |
@@ -233,6 +244,8 @@ Linux 构建脚本直接调用 `arm-none-eabi-gcc`，要求工具链已加入系
 - make print-vars 的核心变量
 - 链接、hex/bin 转换、size 结果
 
+其中 `print-vars` 会输出与芯片选型直接相关的变量，例如：`MCU`、`MCU_FAMILY`、`FLASH_KB`、`RAM_KB`、`STARTUP_GROUP`、`STARTUP_FILE`、`HSE_VALUE_HZ`、`LINKER_SCRIPT`。
+
 ---
 
 ## 5. 如何使用这个开发模板
@@ -251,6 +264,8 @@ Linux 构建脚本直接调用 `arm-none-eabi-gcc`，要求工具链已加入系
    - Gcc/build/STM32_RTOS.bin
 3. 检查 build.log 是否显示成功结束
 
+如果你准备切换到其他 STM32F10x 型号，建议先执行一次 `print-vars`，确认启动文件、链接脚本和芯片组宏是否符合预期，再进行完整编译。
+
 ### 第二步：下载并验证基线运行
 
 1. 将 hex 或 bin 下载到板卡
@@ -262,6 +277,37 @@ Linux 构建脚本直接调用 `arm-none-eabi-gcc`，要求工具链已加入系
    - 周期心跳日志
 
 只有基线可运行，后续改动才容易定位问题。
+
+### 第二步（扩展）：切换目标芯片
+
+如果项目不是运行在默认的 STM32F103C8T6 上，推荐按以下顺序切换：
+
+1. 编辑 `Gcc/project.mk` 中的 `MCU`
+2. 执行 `print-vars MCU=目标型号`，确认 `STARTUP_FILE` 与 `LINKER_SCRIPT`
+3. 执行 `all MCU=目标型号` 完整编译
+4. 下载到目标板卡后重新验证串口日志、自检和心跳输出
+
+如果目标芯片未预置在 `Gcc/mcu_profiles.mk` 中，则还需要在 `project.mk` 中补充 `MCU_FAMILY`、`FLASH_KB`、`RAM_KB`、`STARTUP_GROUP`、`HSE_VALUE_HZ`。
+
+如果你不想修改 `project.mk`，也可以直接在命令行临时覆盖：
+
+- Linux：`./Gcc/scripts/build_linux.sh all MCU=STM32F103RET6`
+- Linux：`./Gcc/scripts/build_linux.sh print-vars MCU=STM32F107RCT6`
+- Windows CMD：`./Gcc/scripts/build_win.cmd all MCU=STM32F103RET6`
+- Windows PowerShell：`./Gcc/scripts/build_win.ps1 all MCU=STM32F107RCT6`
+
+如果直接调用 `make`，建议先进入 `Gcc/` 目录，再执行 `make all MCU=...`。这样 `project.mk`、`mcu_profiles.mk` 和链接脚本的相对路径会保持正确。
+
+需要注意，`MCU` 支持分为两层：
+
+1. 构建系统层面支持该芯片组，能够自动切换宏、启动文件和链接脚本
+2. 当前默认应用镜像是否能装进目标芯片的 Flash/RAM
+
+例如 `STM32F100C8T6B` 这类 8KB RAM 的 Value Line 型号，当前模板默认任务与日志配置在链接阶段会出现 RAM overflow；这时需要继续裁剪任务数量、堆大小、队列深度或日志功能，而不是修改选型机制本身。
+
+详细支持范围见：
+
+- Documents/STM32F10x_支持芯片型号.md
 
 ### 第三步：从模板扩展业务任务
 
@@ -343,16 +389,27 @@ Linux 构建脚本直接调用 `arm-none-eabi-gcc`，要求工具链已加入系
 - 文件后缀是否为 .c/.s/.S/.h
 - 是否被过滤规则排除
 
+### 问题 5：切换芯片后编译报错
+
+检查项：
+
+- `Gcc/project.mk` 中的 `MCU` 是否为 `Gcc/mcu_profiles.mk` 已支持的型号
+- `print-vars` 输出中的 `STARTUP_FILE`、`LINKER_SCRIPT`、`MCU_FAMILY` 是否与目标芯片匹配
+- 若为 F105/F107，是否已使用 `STM32F10X_CL`，且外设代码没有写死非 CL 系列的 PLL 或寄存器配置
+- 若为自定义型号，`FLASH_KB/RAM_KB/STARTUP_GROUP/HSE_VALUE_HZ` 是否填写完整
+- 若报 `region 'RAM' overflowed`，说明当前默认应用功能已超出该芯片 RAM 容量，需要裁剪应用配置，而不是继续修改 `MCU` 派生规则
+
 ---
 
 ## 8. 模板迁移到新项目的建议步骤
 
 1. 复制本工程为新目录
-2. 修改 TARGET 与链接脚本（如芯片型号变化）
+2. 修改 `Gcc/project.mk` 中的 `TARGET` 与 `MCU`
 3. 保留 BSP/Driver/FreeRTOS 基础层
 4. 清空或替换 FreeRTOS/App/tasks 中业务任务
-5. 先通过最小功能（串口 + 心跳）
-6. 再逐步加入传感器、通信、控制等业务模块
+5. 使用 `print-vars` 确认芯片组选型正确
+6. 先通过最小功能（串口 + 心跳）
+7. 再逐步加入传感器、通信、控制等业务模块
 
 这样可以最大化复用模板稳定性，同时降低迁移风险。
 

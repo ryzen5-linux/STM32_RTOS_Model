@@ -1,4 +1,4 @@
-/* GCC-compatible startup for STM32F10x medium-density devices */
+/* GCC-compatible startup for STM32F10x medium-density value-line devices */
     .syntax unified
     .cpu cortex-m3
     .fpu softvfp
@@ -42,15 +42,15 @@ g_pfnVectors:
     .word   DMA1_Channel5_IRQHandler
     .word   DMA1_Channel6_IRQHandler
     .word   DMA1_Channel7_IRQHandler
-    .word   ADC1_2_IRQHandler
-    .word   USB_HP_CAN1_TX_IRQHandler
-    .word   USB_LP_CAN1_RX0_IRQHandler
-    .word   CAN1_RX1_IRQHandler
-    .word   CAN1_SCE_IRQHandler
+    .word   ADC1_IRQHandler
+    .word   0
+    .word   0
+    .word   0
+    .word   0
     .word   EXTI9_5_IRQHandler
-    .word   TIM1_BRK_IRQHandler
-    .word   TIM1_UP_IRQHandler
-    .word   TIM1_TRG_COM_IRQHandler
+    .word   TIM1_BRK_TIM15_IRQHandler
+    .word   TIM1_UP_TIM16_IRQHandler
+    .word   TIM1_TRG_COM_TIM17_IRQHandler
     .word   TIM1_CC_IRQHandler
     .word   TIM2_IRQHandler
     .word   TIM3_IRQHandler
@@ -66,7 +66,19 @@ g_pfnVectors:
     .word   USART3_IRQHandler
     .word   EXTI15_10_IRQHandler
     .word   RTCAlarm_IRQHandler
-    .word   USBWakeUp_IRQHandler
+    .word   CEC_IRQHandler
+    .word   0
+    .word   0
+    .word   0
+    .word   0
+    .word   0
+    .word   0
+    .word   0
+    .word   0
+    .word   0
+    .word   0
+    .word   0
+    .word   TIM6_DAC_IRQHandler
+    .word   TIM7_IRQHandler
 
     .include "../BSP/CMSIS/startup_stm32f10x_common.inc"
-

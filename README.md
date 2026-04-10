@@ -1,11 +1,12 @@
-# STM32F103 FreeRTOS 开发模板
+# STM32F10x FreeRTOS 开发模板
 
-一个面向 STM32F103C8T6 的基础、标准、易于扩展的 FreeRTOS 开发模板，内置自动化基础构建脚本、运行自检与系统级心跳支持。
+一个默认面向 STM32F103C8T6、同时覆盖多种 STM32F10x SPL 芯片组的 FreeRTOS 开发模板，内置自动化基础构建脚本、运行自检与系统级心跳支持。
 
 ## 核心特性
 
 - **稳定内核**：基于 FreeRTOS，已配置好任务、队列、互斥量、信号量与软件定时器的基础演示。
 - **开箱即用构建**：使用 GCC (arm-none-eabi-gcc) + Makefile，跨平台支持 Windows (CMD/PowerShell) 与 Linux (Bash)。自带源文件自动发现机制，无需手动修改大段 Makefile。
+- **芯片快速切换**：通过修改 `Gcc/project.mk` 中的 `MCU` 一项，即可在已内置的 F100 / F103 / F105 / F107 常见型号之间切换；未预置型号也可通过手动填写 Flash/RAM/芯片组参数完成适配。
 - **完备的启动自检**：上电即对 RCC、GPIO、USART、TIM、ADC、DMA、EXTI 和 RTC 等关键外设进行自动化连通性验证。
 - **系统监控日志**：内置 Task3 心跳任务，默认一秒输出一次 RTOS 状态 (Tick、任务数、队列深度、空闲堆、历史最小空闲堆)。
 - **规范的目录拆分**：BSP、驱动 (Peripheral/Device/Support/Resources)、应用代码 (App)、内核与外设库，天然支持业务分层。
@@ -13,7 +14,7 @@
 ## 环境要求
 
 ### 硬件
-- 核心板：STM32F103C8T6 (或管脚与资源兼容的 STM32 芯片，可通过修改配置兼容其他型号)
+- 核心板：默认 STM32F103C8T6，也支持文档中列出的 STM32F10x 常见型号
 - 默认调试端口：USART2 (PA2 TX / PA3 RX，波特率 115200)，用于输出自检信息和日志。
 
 ### 软件
@@ -67,7 +68,67 @@ Windows CMD 脚本同样支持常用构建动作：
 .\Gcc\scripts\build_win.cmd all V=1
 ```
 
-### 2. 清理工程
+### 2. 切换目标芯片
+
+默认情况下，只需修改 `Gcc/project.mk` 中的 `MCU`：
+
+```makefile
+MCU ?= STM32F103C8T6
+
+# 示例：切换到高密度 512 KB Flash / 64 KB RAM
+# MCU ?= STM32F103RET6
+
+# 示例：切换到互联网络系列
+# MCU ?= STM32F107RCT6
+```
+
+如果目标型号未预置在 `Gcc/mcu_profiles.mk`，可在 `Gcc/project.mk` 中直接填写：
+
+```makefile
+MCU ?= CUSTOM_STM32F10X
+MCU_FAMILY ?= STM32F10X_HD
+FLASH_KB ?= 256
+RAM_KB ?= 48
+STARTUP_GROUP ?= hd
+HSE_VALUE_HZ ?= 8000000
+```
+
+也可以不修改文件，直接在构建命令后追加 make 变量临时切换目标芯片：
+
+```bash
+# Linux: 直接切到 STM32F103RET6 编译
+./Gcc/scripts/build_linux.sh all MCU=STM32F103RET6
+
+# Linux: 直接切到 STM32F107RCT6 编译
+./Gcc/scripts/build_linux.sh all MCU=STM32F107RCT6
+
+# 先查看派生出的启动文件、链接脚本和芯片组宏
+./Gcc/scripts/build_linux.sh print-vars MCU=STM32F107RCT6
+```
+
+```cmd
+:: Windows CMD: 切到 STM32F103RET6
+.\Gcc\scripts\build_win.cmd all MCU=STM32F103RET6
+
+:: Windows CMD: 先检查变量
+.\Gcc\scripts\build_win.cmd print-vars MCU=STM32F107RCT6
+```
+
+```powershell
+# Windows PowerShell: 切到 STM32F107RCT6
+.\Gcc\scripts\build_win.ps1 all MCU=STM32F107RCT6
+```
+
+如果你直接使用 make，建议先进入 `Gcc/` 目录再执行：
+
+```bash
+cd Gcc
+make all MCU=STM32F107RCT6
+```
+
+注意：当前仓库已经验证了多 MCU 的构建切换机制，但默认演示应用本身仍然占用较多 RAM。对于 `STM32F100C8T6B` 这类 8KB RAM 的型号，可能会在链接阶段出现 RAM overflow，需要进一步裁剪任务、队列、日志或堆配置后才能落到实板。
+
+### 3. 清理工程
 
 **Windows:**
 ```powershell
@@ -103,3 +164,6 @@ STM32_RTOS/
 
 更多详细的项目结构解释、如何开发新的外设驱动、添加新的 RTOS 任务，请参阅：
 👉 **[开发模板使用教程](Documents/STM32_RTOS_开发模板使用教程.md)**
+
+芯片组选型、启动文件和链接脚本支持说明请参阅：
+👉 **[STM32F10x 支持芯片型号](Documents/STM32F10x_支持芯片型号.md)**

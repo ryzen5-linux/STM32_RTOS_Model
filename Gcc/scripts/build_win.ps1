@@ -87,6 +87,10 @@ function Test-IsAllowedPath {
         return $false
     }
 
+    if ($RelativePath -match '^BSP/CMSIS/startup_stm32f10x_.*\.[sS]$') {
+        return $false
+    }
+
     if ($RelativePath.StartsWith('FreeRTOS/Source/portable/')) {
         return ($RelativePath -eq 'FreeRTOS/Source/portable/GCC/ARM_CM3/port.c') -or
                ($RelativePath -eq 'FreeRTOS/Source/portable/GCC/ARM_CM3/portmacro.h') -or

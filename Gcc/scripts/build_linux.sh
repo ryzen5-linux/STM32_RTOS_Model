@@ -28,6 +28,10 @@ is_allowed_path() {
         return 1
     fi
 
+    if [[ "${rel}" == BSP/CMSIS/startup_stm32f10x_*.[sS] ]]; then
+        return 1
+    fi
+
     if [[ "${rel}" == FreeRTOS/Source/portable/* ]]; then
         [[ "${rel}" == "FreeRTOS/Source/portable/GCC/ARM_CM3/port.c" ]] && return 0
         [[ "${rel}" == "FreeRTOS/Source/portable/GCC/ARM_CM3/portmacro.h" ]] && return 0

@@ -1,4 +1,4 @@
-/* GCC-compatible startup for STM32F10x medium-density devices */
+/* GCC-compatible startup for STM32F10x connectivity-line devices */
     .syntax unified
     .cpu cortex-m3
     .fpu softvfp
@@ -43,8 +43,8 @@ g_pfnVectors:
     .word   DMA1_Channel6_IRQHandler
     .word   DMA1_Channel7_IRQHandler
     .word   ADC1_2_IRQHandler
-    .word   USB_HP_CAN1_TX_IRQHandler
-    .word   USB_LP_CAN1_RX0_IRQHandler
+    .word   CAN1_TX_IRQHandler
+    .word   CAN1_RX0_IRQHandler
     .word   CAN1_RX1_IRQHandler
     .word   CAN1_SCE_IRQHandler
     .word   EXTI9_5_IRQHandler
@@ -66,7 +66,31 @@ g_pfnVectors:
     .word   USART3_IRQHandler
     .word   EXTI15_10_IRQHandler
     .word   RTCAlarm_IRQHandler
-    .word   USBWakeUp_IRQHandler
+    .word   OTG_FS_WKUP_IRQHandler
+    .word   0
+    .word   0
+    .word   0
+    .word   0
+    .word   0
+    .word   0
+    .word   0
+    .word   TIM5_IRQHandler
+    .word   SPI3_IRQHandler
+    .word   UART4_IRQHandler
+    .word   UART5_IRQHandler
+    .word   TIM6_IRQHandler
+    .word   TIM7_IRQHandler
+    .word   DMA2_Channel1_IRQHandler
+    .word   DMA2_Channel2_IRQHandler
+    .word   DMA2_Channel3_IRQHandler
+    .word   DMA2_Channel4_IRQHandler
+    .word   DMA2_Channel5_IRQHandler
+    .word   ETH_IRQHandler
+    .word   ETH_WKUP_IRQHandler
+    .word   CAN2_TX_IRQHandler
+    .word   CAN2_RX0_IRQHandler
+    .word   CAN2_RX1_IRQHandler
+    .word   CAN2_SCE_IRQHandler
+    .word   OTG_FS_IRQHandler
 
     .include "../BSP/CMSIS/startup_stm32f10x_common.inc"
-

@@ -1,11 +1,12 @@
 /**
-  ******************************************************************************
-  * @file    drv_rcc.c
-  * @brief   复位与时钟控制(RCC)驱动实现 - STM32F103C8T6
-  ******************************************************************************
-  */
+    ******************************************************************************
+    * @file    drv_rcc.c
+    * @brief   复位与时钟控制(RCC)驱动实现
+    ******************************************************************************
+    */
 
 #include "drv_rcc.h"
+#include "stm32f10x_gpio.h"
 #include <stddef.h>
 
 void DRV_RCC_SystemClockConfig_72MHz(void)
@@ -21,20 +22,49 @@ void DRV_RCC_SystemClockConfig_72MHz(void)
 
     if (hse_status == SUCCESS)
     {
-        /* 使能Flash预取缓冲 */
+#if defined(STM32F10X_CL)
         FLASH_PrefetchBufferCmd(FLASH_PrefetchBuffer_Enable);
-        /* 设置Flash读取延迟：72MHz需要2个等待周期 */
         FLASH_SetLatency(FLASH_Latency_2);
 
-        /* HCLK = SYSCLK不分频 */
         RCC_HCLKConfig(RCC_SYSCLK_Div1);
-        /* PCLK2 = HCLK不分频 = 72MHz */
         RCC_PCLK2Config(RCC_HCLK_Div1);
-        /* PCLK1 = HCLK / 2 = 36MHz */
         RCC_PCLK1Config(RCC_HCLK_Div2);
 
-        /* PLL: HSE * 9 = 8MHz * 9 = 72MHz */
+        /* F105/F107: 25 MHz HSE -> PLL2 -> PREDIV1 -> PLL -> 72 MHz */
+        RCC->CFGR2 &= (uint32_t)~(RCC_CFGR2_PREDIV2 | RCC_CFGR2_PLL2MUL |
+                      RCC_CFGR2_PREDIV1 | RCC_CFGR2_PREDIV1SRC);
+        RCC->CFGR2 |= (uint32_t)(RCC_CFGR2_PREDIV2_DIV5 | RCC_CFGR2_PLL2MUL8 |
+                     RCC_CFGR2_PREDIV1SRC_PLL2 | RCC_CFGR2_PREDIV1_DIV5);
+
+        RCC->CR |= RCC_CR_PLL2ON;
+        while ((RCC->CR & RCC_CR_PLL2RDY) == 0U) {}
+
+        RCC->CFGR &= (uint32_t)~(RCC_CFGR_PLLXTPRE | RCC_CFGR_PLLSRC | RCC_CFGR_PLLMULL);
+        RCC->CFGR |= (uint32_t)(RCC_CFGR_PLLXTPRE_PREDIV1 |
+                    RCC_CFGR_PLLSRC_PREDIV1 |
+                    RCC_CFGR_PLLMULL9);
+#elif defined(STM32F10X_LD_VL) || defined(STM32F10X_MD_VL) || defined(STM32F10X_HD_VL)
+    /* Value Line 典型最高主频为 24 MHz，使用 HSE/2 * 6。 */
+    FLASH_SetLatency(FLASH_Latency_0);
+
+    RCC_HCLKConfig(RCC_SYSCLK_Div1);
+    RCC_PCLK2Config(RCC_HCLK_Div1);
+    RCC_PCLK1Config(RCC_HCLK_Div1);
+
+    RCC_PREDIV1Config(RCC_PREDIV1_Source_HSE, RCC_PREDIV1_Div2);
+    RCC_PLLConfig(RCC_PLLSource_PREDIV1, RCC_PLLMul_6);
+#else
+    FLASH_PrefetchBufferCmd(FLASH_PrefetchBuffer_Enable);
+    FLASH_SetLatency(FLASH_Latency_2);
+
+    RCC_HCLKConfig(RCC_SYSCLK_Div1);
+    RCC_PCLK2Config(RCC_HCLK_Div1);
+    RCC_PCLK1Config(RCC_HCLK_Div2);
+
+        /* F100/F101/F102/F103: HSE * 9 = 8 MHz * 9 = 72 MHz */
         RCC_PLLConfig(RCC_PLLSource_HSE_Div1, RCC_PLLMul_9);
+#endif
+
         RCC_PLLCmd(ENABLE);
         while (RCC_GetFlagStatus(RCC_FLAG_PLLRDY) == RESET) {}
 
